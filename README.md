@@ -79,7 +79,7 @@ spring:
 All API requests must include the following header:
 
 ```http
-X-API-KEY: Aditya@2003
+X-API-KEY: Aditya@2006
 ```
 
 If the API key is missing or invalid, the server responds with `401 Unauthorized`.
@@ -117,7 +117,7 @@ Request body:
 
 ```json
 {
-  "name": "Aditya A.V",
+  "name": "Aditya K",
   "email": "aditya@example.com"
 }
 ```

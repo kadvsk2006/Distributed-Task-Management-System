@@ -13,7 +13,7 @@ import java.io.IOException;
 @Component
 public class ApiKeyConfig extends OncePerRequestFilter {
 
-    private static final String API_KEY = "Mahesh@2003";
+    private static final String API_KEY = "Aditya@2006";
     private static final String HEADER_NAME = "X-API-KEY";
 
     @Override

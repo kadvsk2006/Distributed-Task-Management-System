@@ -20,8 +20,8 @@
     <version>1.0.0</version>
     <packaging>war</packaging>
 
-    <name>Task Management API</name>
-    <description>Backend assignment – Task Management REST API</description>
+    <name>Distributed Task Management System</name>
+    <description>Spring Boot REST API for managing users and tasks with PostgreSQL persistence and API-key security.</description>
 
     <properties>
         <java.version>17</java.version>

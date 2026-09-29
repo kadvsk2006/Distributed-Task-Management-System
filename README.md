@@ -1,92 +1,66 @@
-# 🗂️ Task Management REST API
+# Distributed Task Management System
 
-A **Spring Boot--based Task Management REST API** that allows users to
-create, manage, update, and track tasks with secure API access using
-**API Key authentication**.
+This project is a Spring Boot-based REST API for managing users and tasks. It exposes a backend service for registering users, creating and assigning tasks, updating status, filtering task records, and persisting data in PostgreSQL.
 
----
-
-## 🚀 Features
-
-- User Management (Create, View, List)
-- Task Management (Create, Read, Update, Delete)
-- Task Status Update using PATCH
-- Pagination & Filtering
-- PostgreSQL Database
-- API Key Security
-- Global Exception Handling
+The application is built with Java 17, Spring Boot 3, Spring Data JPA, Hibernate, Flyway, and Spring Security. It includes validation, centralized exception handling, pagination, and API-key authentication.
 
 ---
 
-## 🛠️ Tech Stack
+## Overview
+
+The current implementation supports:
+
+- User creation and retrieval
+- Task creation, retrieval, update, and deletion
+- Task status updates with a PATCH endpoint
+- Task filtering and pagination
+- Assignment of tasks to a specific user
+- PostgreSQL persistence with Flyway migration scripts
+- Standardized JSON error responses
+- API-key protection for incoming requests
+
+---
+
+## Technology Stack
 
 - Java 17
-- Spring Boot 3
-- Spring Data JPA (Hibernate)
-- Spring Security (API Key)
+- Spring Boot 3.2.1
+- Spring Web
+- Spring Data JPA
+- Hibernate
+- Spring Security
 - PostgreSQL
-- Lombok
+- Flyway
 - Maven
+- Lombok
 
 ---
 
-## 🔐 API Authentication
+## Database Setup
 
-All API requests must include the following header:
-
-    X-API-KEY: Mahesh@2003
-
-If the API key is missing or invalid, the server returns **401
-Unauthorized**.
-
----
-
-## 🗄️ Database Setup
-
-Create database:
+Create the PostgreSQL database used by the application:
 
 ```sql
 CREATE DATABASE task_management;
 ```
 
-## 2️⃣ Database Tables
+The application configuration in `src/main/resources/application.yml` expects PostgreSQL to be available locally on port 5432 using the `task_management` database.
 
-**👤 Users Table**
-
-```sql
-CREATE TABLE public.users (
-    id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE
-);
-
-```
-
-**📝 Tasks Table**
-
-```sql
-CREATE TABLE task (
-    id BIGSERIAL PRIMARY KEY,
-    title VARCHAR(100) NOT NULL,
-    description VARCHAR(500),
-    status VARCHAR(20),
-    priority VARCHAR(20),
-    due_date DATE,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP,
-    assigned_to BIGINT REFERENCES users(id)
-);
-
-```
-
-`application.yml` configuration:
+Example configuration:
 
 ```yaml
+server:
+  port: 8080
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/task_management
     username: postgres
     password: your_password
+
+  flyway:
+    baselineOnMigrate: true
+    locations: classpath:db/migration
 
   jpa:
     hibernate:
@@ -95,84 +69,99 @@ spring:
     properties:
       hibernate:
         format_sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
 ```
 
 ---
 
-## ▶️ Run Application
+## Authentication
+
+All API requests must include the following header:
+
+```http
+X-API-KEY: Aditya@2003
+```
+
+If the API key is missing or invalid, the server responds with `401 Unauthorized`.
+
+---
+
+## Running the Application
+
+From the project root, run:
 
 ```bash
 mvn clean install
 mvn spring-boot:run
 ```
 
-Application runs at:
+The application runs on:
 
-    http://localhost:8080
+```text
+http://localhost:8080
+```
 
 ---
 
-## 📌 API Endpoints Documentation
+## API Endpoints
 
-For **detailed API documentation**, **request/response examples**, and **Postman screenshots**,  
-please refer to the following document:
+### User Endpoints
 
-📄 **Task Management REST API.pdf**
+#### Create a user
 
-This PDF includes:
+```http
+POST /api/users
+```
 
-- Complete API flow explanation
-- Request & response screenshots from Postman
-- Validation and error handling examples
-- Pagination and filtering details
-
-### 👤 User APIs
-
-#### 1️⃣ Create User
-
-**POST** `/api/users`
-
-Request Body:
+Request body:
 
 ```json
 {
-  "name": "Mahesh A.V",
-  "email": "mahesh@example.com"
+  "name": "Aditya A.V",
+  "email": "aditya@example.com"
 }
 ```
 
-Response: - `201 Created` - `409 Conflict` (Email already exists)
+Behavior:
+- Returns `201 Created` when the user is created
+- Returns `409 Conflict` if the email already exists
+
+#### Get all users
+
+```http
+GET /api/users?page=0&size=10
+```
+
+Behavior:
+- Returns a paginated list of users
+- Supports Spring Data `Pageable` parameters
+
+#### Get a user by ID
+
+```http
+GET /api/users/{id}
+```
+
+Behavior:
+- Returns the user matching the ID
+- Returns `404 Not Found` if the user does not exist
 
 ---
 
-#### 2️⃣ Get All Users (Pagination)
+### Task Endpoints
 
-**GET** `/api/users?page=0&size=10`
+#### Create a task
 
-Response: - `200 OK`
+```http
+POST /api/tasks
+```
 
----
-
-#### 3️⃣ Get User by ID
-
-**GET** `/api/users/{id}`
-
-Response: - `200 OK` - `404 Not Found`
-
----
-
-### 📝 Task APIs
-
-#### 4️⃣ Create Task
-
-**POST** `/api/tasks`
-
-Request Body:
+Request body:
 
 ```json
 {
   "title": "Complete task management",
-  "description": "Task Management system by sentra world",
+  "description": "Task management backend implementation",
   "status": "TODO",
   "priority": "MEDIUM",
   "dueDate": "2026-01-30",
@@ -180,33 +169,70 @@ Request Body:
 }
 ```
 
-Response: - `201 Created` - `404 Not Found` (User not found)
+Supported values:
+- Status: `TODO`, `IN_PROGRESS`, `DONE`
+- Priority: `LOW`, `MEDIUM`, `HIGH`
 
----
+Behavior:
+- Creates a task and stores it in PostgreSQL
+- Returns `200 OK` in the current controller implementation
+- Returns `404 Not Found` if the assigned user does not exist
+- Returns `400 Bad Request` for invalid enum values
 
-#### 5️⃣ Get All Tasks (Filters + Pagination)
+#### Get all tasks
 
-**GET** `/api/tasks?page=0&size=10&status=TODO&priority=HIGH`
+```http
+GET /api/tasks?page=0&size=10&status=TODO&priority=HIGH&userId=1
+```
 
-Optional Filters: - status - priority - assignedToUserId
+Supported query parameters:
+- `status` – filter by task status
+- `priority` – filter by task priority
+- `userId` – filter tasks by assigned user
+- `page` – page number, default `0`
+- `size` – page size, default `10`
 
-Response: - `200 OK`
+Behavior:
+- Returns a paginated and optionally filtered list of tasks
+- Returns `200 OK`
 
----
+#### Get a task by ID
 
-#### 6️⃣ Get Task by ID
+```http
+GET /api/tasks/{id}
+```
 
-**GET** `/api/tasks/{id}`
+Behavior:
+- Returns the matching task
+- Returns `404 Not Found` if the task is missing
 
-Response: - `200 OK` - `404 Not Found`
+#### Update task status
 
----
+```http
+PATCH /api/tasks/{id}/status?status=IN_PROGRESS
+```
 
-#### 7️⃣ Update Task (Full Update)
+Behavior:
+- Updates only the task status field
+- Returns the updated task with `200 OK`
 
-**PUT** `/api/tasks/{id}`
+#### Delete a task
 
-Request Body:
+```http
+DELETE /api/tasks/{id}
+```
+
+Behavior:
+- Deletes the task by ID
+- Returns no content in the current implementation
+
+#### Update a task
+
+```http
+PUT /api/tasks/{id}
+```
+
+Request body:
 
 ```json
 {
@@ -219,41 +245,33 @@ Request Body:
 }
 ```
 
-Response: - `200 OK` - `404 Not Found`
+Behavior:
+- Updates the existing task when the ID exists
+- Creates a new task when the ID is not found
+- Returns `200 OK` for update and `201 Created` for creation in the current implementation
 
 ---
 
-#### 8️⃣ Update Task Status (Partial Update)
+## Validation and Error Handling
 
-**PATCH** `/api/tasks/{id}/status?status=DONE`
+The project validates request payloads and handles common failure cases with centralized exception handling.
 
-Response: - `200 OK` - `404 Not Found`
+Examples of handled cases:
+- Missing or invalid user email
+- Missing or invalid task title
+- Invalid status and priority values
+- Duplicate email addresses
+- Missing user or task records
 
----
-
-#### 9️⃣ Delete Task
-
-**DELETE** `/api/tasks/{id}`
-
-Response: - `200 OK No Content` - `404 Not Found`
-
----
-
-## ⚠️ Error Handling
-
-Standard error response format:
-
-```json
-{
-  "message": "Resource not found",
-  "status": 404,
-  "timestamp": "2026-01-10T01:28:43"
-}
-```
+These errors are returned as JSON responses with appropriate status codes such as:
+- `400 Bad Request`
+- `401 Unauthorized`
+- `404 Not Found`
+- `409 Conflict`
 
 ---
 
-## 👨‍💻 Author
+## Author
 
-**Mahesh A V**\
-Backend Developer \| Java \| Spring Boot
+**Aditya K**
+Backend Developer | Java | Spring Boot

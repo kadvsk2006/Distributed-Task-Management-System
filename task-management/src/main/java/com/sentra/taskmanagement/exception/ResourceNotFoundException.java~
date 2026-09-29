@@ -1,0 +1,5 @@
+package com.sentra.taskmanagement.exception;
+
+public class ResourceNotFoundException {
+
+}
